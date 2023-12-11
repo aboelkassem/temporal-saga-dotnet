@@ -7,9 +7,11 @@ public record TransferDetails(decimal Amount, string FromAmount, string ToAmount
 public class Activities
 {
     [Activity]
-    public async Task Withdraw(TransferDetails d)
+    public async Task<bool> Withdraw(TransferDetails d)
     {
+        // bool = isWithdrawalSuccessful
         Console.WriteLine($"Withdrawing {d.Amount} from account {d.FromAmount}. ReferenceId: {d.ReferenceId}");
+        return true;
     }
 
     [Activity]
@@ -19,9 +21,11 @@ public class Activities
     }
 
     [Activity]
-    public async Task Deposit(TransferDetails d)
+    public async Task<bool> Deposit(TransferDetails d)
     {
+        // bool = isDepositSuccessful
         Console.WriteLine($"Depositing {d.Amount} into account {d.ToAmount}. ReferenceId: {d.ReferenceId}");
+        return true;
     }
 
     [Activity]

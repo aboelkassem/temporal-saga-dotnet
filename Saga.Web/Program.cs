@@ -25,7 +25,7 @@ app.MapGet("/", async (Task<TemporalClient> clientTask, string? name) =>
     // Start a workflow
     var handle = await client.StartWorkflowAsync(
         (Saga.Workflows.SagaWorkflow wf) => wf.RunAsync(new TransferDetails(100, "acc1000", "acc2000", "1324")),
-        new(id: "process-order-number-90743818", taskQueue: TasksQueue.TransferMoney)
+        new(id: "process-transfer-money-90743818", taskQueue: TasksQueue.TransferMoney)
         {
             //RetryPolicy = new()
             //{
@@ -36,7 +36,12 @@ app.MapGet("/", async (Task<TemporalClient> clientTask, string? name) =>
             //}
         });
 
-    return "Workflow done";
+    // Wait for workflow to complete
+    var isSuccess = await handle.GetResultAsync();
+    if (isSuccess)
+        return Results.Ok("Transfer completed successfully");
+    else
+        return Results.BadRequest("Transfer failed");
 });
 
 app.Run();

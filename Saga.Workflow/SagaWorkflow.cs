@@ -10,8 +10,9 @@ using Temporalio.Workflows;
 public class SagaWorkflow
 {
     [WorkflowRun]
-    public async Task RunAsync(TransferDetails transfer)
+    public async Task<bool> RunAsync(TransferDetails transfer)
     {
+        // bool = isWorkflowSuccessful
         var activities = new Activities();
         var options = new ActivityOptions()
         {
@@ -30,17 +31,23 @@ public class SagaWorkflow
 
         try
         {
-            await Workflow.ExecuteActivityAsync(
+            var isWithdrawSuccess = await Workflow.ExecuteActivityAsync(
                 (Activities act) => act.Withdraw(transfer),
                 options);
+
+            if (!isWithdrawSuccess)
+               return false;
 
             saga.AddCompensation(async () => await Workflow.ExecuteActivityAsync(
                                   (Activities act) => act.WithdrawCompensation(transfer),
                                                                    options));
 
-            await Workflow.ExecuteActivityAsync(
+            var isDepositSuccess = await Workflow.ExecuteActivityAsync(
                 (Activities act) => act.Deposit(transfer),
                 options);
+
+            if (!isDepositSuccess)
+                return false;
 
             saga.AddCompensation(async () => await Workflow.ExecuteActivityAsync(
                        (Activities act) => act.DepositCompensation(transfer),
@@ -50,6 +57,8 @@ public class SagaWorkflow
             await Workflow.ExecuteActivityAsync(
                            (Activities act) => act.StepWithError(transfer),
                                       options);
+
+            return true;
         }
         catch (Exception ex)
         {
@@ -66,6 +75,7 @@ public class SagaWorkflow
             });
 
             await saga.CompensateAsync();
+            return false;
         }
     }
 }
