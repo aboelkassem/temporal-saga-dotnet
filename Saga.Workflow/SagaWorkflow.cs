@@ -36,6 +36,7 @@ public class SagaWorkflow
                 options);
 
             // Note: bool flag is to mimic if you using Result pattern like Result.True() or Result.False()
+            // not through exception
             if (!isWithdrawSuccess)
                return false;
 
