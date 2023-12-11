@@ -55,6 +55,7 @@ public class SagaWorkflow
                        (Activities act) => act.DepositCompensation(transfer),
                                   options));
 
+            // throw new Exception
             await Workflow.ExecuteActivityAsync(
                            (Activities act) => act.StepWithError(transfer),
                                       options);
