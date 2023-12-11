@@ -35,6 +35,7 @@ public class SagaWorkflow
                 (Activities act) => act.Withdraw(transfer),
                 options);
 
+            // Note: bool flag is to mimic if you using Result pattern like Result.True() or Result.False()
             if (!isWithdrawSuccess)
                return false;
 
