@@ -13,7 +13,6 @@ public class SagaWorkflow
     public async Task<bool> RunAsync(TransferDetails transfer)
     {
         // bool = isWorkflowSuccessful
-        var activities = new Activities();
         var options = new ActivityOptions()
         {
             StartToCloseTimeout = TimeSpan.FromSeconds(90), // schedule a retry if the Activity function doesn't return within 90 seconds
@@ -32,7 +31,7 @@ public class SagaWorkflow
         try
         {
             var isWithdrawSuccess = await Workflow.ExecuteActivityAsync(
-                (Activities act) => act.Withdraw(transfer),
+                () => Activities.Withdraw(transfer),
                 options);
 
             // Note: bool flag is to mimic if you using Result pattern like Result.True() or Result.False()
@@ -41,23 +40,23 @@ public class SagaWorkflow
                return false;
 
             saga.AddCompensation(async () => await Workflow.ExecuteActivityAsync(
-                                  (Activities act) => act.WithdrawCompensation(transfer),
+                                  () => Activities.WithdrawCompensation(transfer),
                                                                    options));
 
             var isDepositSuccess = await Workflow.ExecuteActivityAsync(
-                (Activities act) => act.Deposit(transfer),
+                () => Activities.Deposit(transfer),
                 options);
 
             if (!isDepositSuccess)
                 return false;
 
             saga.AddCompensation(async () => await Workflow.ExecuteActivityAsync(
-                       (Activities act) => act.DepositCompensation(transfer),
+                       () => Activities.DepositCompensation(transfer),
                                   options));
 
             // throw new Exception
             await Workflow.ExecuteActivityAsync(
-                           (Activities act) => act.StepWithError(transfer),
+                           () => Activities.StepWithError(transfer),
                                       options);
 
             return true;
