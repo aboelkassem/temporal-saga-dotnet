@@ -5,19 +5,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddSimpleConsole().SetMinimumLevel(LogLevel.Information);
 
-var connection = await TemporalConnection.ConnectAsync(new TemporalConnectionOptions("localhost:7233"));
-builder.Services.AddSingleton<ITemporalClient>(provider => new TemporalClient(connection, new()
-{
-    LoggerFactory = provider.GetRequiredService<ILoggerFactory>(),
-}));
+builder.Services.AddSingleton(ctx =>
+    TemporalClient.ConnectAsync(new()
+    {
+        TargetHost = "localhost:7233",
+        LoggerFactory = ctx.GetRequiredService<ILoggerFactory>(),
+    }));
 
 // start temporal workers
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();
 
-app.MapGet("/", async (ITemporalClient client, string? name) =>
+app.MapGet("/", async (Task<TemporalClient> clientTask, string? name) =>
 {
+    
+    var client = await clientTask;
+
     // Start a workflow
     var handle = await client.StartWorkflowAsync(
         (Saga.Workflows.SagaWorkflow wf) => wf.RunAsync(new TransferDetails(100, "acc1000", "acc2000", "1324")),
